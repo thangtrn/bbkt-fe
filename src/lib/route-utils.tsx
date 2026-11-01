@@ -57,7 +57,6 @@ export const getActiveRoute = (pathname: string): ActiveRoute => {
   };
 };
 
-
 export const getMenuItems = (): MenuProps['items'] => {
   return ROUTES.map((route) => ({
     key: route.id,

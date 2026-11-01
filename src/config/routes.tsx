@@ -3,43 +3,43 @@ import { AiOutlineHome } from 'react-icons/ai';
 import { GrDocumentConfig } from 'react-icons/gr';
 import { RiAiGenerate3dLine } from 'react-icons/ri';
 
-export type NavigationItem = {
+export type RouteItem = {
   id: string;
   label: string;
-  path: string;
+  url: string;
   icon?: ReactNode;
-  children?: readonly NavigationItem[];
+  children?: readonly RouteItem[];
 };
 
-export const NAVIGATION_ITEMS = [
+export const ROUTES = [
   {
     id: 'home',
     label: 'Trang chủ',
-    path: '/',
+    url: '/',
     icon: <AiOutlineHome size={18} />,
   },
   {
-    id: 'settings',
+    id: 'configuation',
     label: 'Cấu hình',
-    path: '/settings',
+    url: '/configuation',
     icon: <GrDocumentConfig size={18} />,
   },
   {
     id: 'documents',
     label: 'Hồ sơ',
-    path: '/documents',
+    url: '/documents',
     icon: <RiAiGenerate3dLine size={18} />,
     children: [
       {
         id: 'training',
         label: 'Lớp tập trung',
-        path: '/documents/training',
+        url: '/documents/training',
       },
       {
         id: 'plan-drill',
         label: 'Thực tập phương án',
-        path: '/documents/plan-drill',
+        url: '/documents/plan-drill',
       },
     ],
   },
-] satisfies readonly NavigationItem[];
+] satisfies readonly RouteItem[];
