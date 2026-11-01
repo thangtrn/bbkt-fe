@@ -3,2412 +3,304 @@
 import AppDataGrid from '@/components/data-grid/app-data-grid';
 import { AppColumnOrColumnGroup } from '@/components/data-grid/app-data-grid.type';
 import { RowNumberColumn } from '@/components/data-grid/colums';
-import AppCard from '@/components/ui/app-card';
-import { StatisticCard } from '@/components/ui/statistic-card';
-import { Button, DatePicker, Divider, Flex } from 'antd';
-import dayjs from 'dayjs';
-import { CiBoxes } from 'react-icons/ci';
-import {
-  HiOutlineClipboardDocument,
-  HiOutlineClipboardDocumentList,
-} from 'react-icons/hi2';
-import { LuClipboardCheck } from 'react-icons/lu';
 
-const { RangePicker } = DatePicker;
+import {
+  Button,
+  Card,
+  Divider,
+  Flex,
+  Input,
+  Modal,
+  Row,
+  Space,
+  Tag,
+  Typography,
+} from 'antd';
+
+import {
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  EyeOutlined,
+  CalendarOutlined,
+} from '@ant-design/icons';
+import { RiEdit2Fill } from 'react-icons/ri';
+import dayjs from 'dayjs';
+import { MdDeleteForever } from 'react-icons/md';
+import { useState } from 'react';
+import { SelectColumn } from 'react-data-grid';
+
+const { Title, Text } = Typography;
+
+type ModalStage = 'view' | 'new' | 'edit' | null;
 
 interface Row {
   id: string;
-  tuNgay: Date;
-  denNgay: Date;
-  tuan: string;
-
-  // Công tác kiểm tra
-  bienBan: number;
-  dinhKy: number;
-  dotXuat: number;
-  nhom1: number;
-  nhom2: number;
-  huongDan: number;
-  soHoa: number;
-
-  // Xử lý vi phạm
-  soBienBan: number;
-  soHanhVi: number;
-  soTien: number;
-
-  // Phối hợp - nhóm 1
-  pc06_1: number;
-  pc07_1: number;
-  pc08_1: number;
-  pc09_1: number;
-
-  // Phối hợp - nhóm 2
-  pc06_2: number;
-  pc07_2: number;
-  pc08_2: number;
-  pc09_2: number;
-
-  // Huấn luyện
-  soLopHuanLuyen: number;
-  soCoSo: number;
-  soNguoiThamGiaHuanLuyen: number;
-
-  // Tuyên truyền
-  soLopTuyenTruyen: number;
-  soNguoiThamGiaTuyenTruyen: number;
-
-  // Cấp
-  cap1: number;
-  cap2: number;
-  cap3: number;
-  cap4: number;
-  cap5: number;
-
-  // Phương tiện / CBCS
-  soPhuongTien: number;
-  soCbcs: number;
-
-  // Thiệt hại
-  thietHai: number;
+  schemaId: string;
+  name: string;
+  dataValues: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-interface SummaryRow {
-  // Công tác kiểm tra
-  tongBienBan: number;
-  tongDinhKy: number;
-  tongDotXuat: number;
-  tongNhom1: number;
-  tongNhom2: number;
-  tongHuongDan: number;
-  tongSoHoa: number;
-
-  // Xử lý vi phạm
-  tongSoBienBan: number;
-  tongSoHanhVi: number;
-  tongSoTien: number;
-
-  // Phối hợp - nhóm 1
-  tongPc06_1: number;
-  tongPc07_1: number;
-  tongPc08_1: number;
-  tongPc09_1: number;
-
-  // Phối hợp - nhóm 2
-  tongPc06_2: number;
-  tongPc07_2: number;
-  tongPc08_2: number;
-  tongPc09_2: number;
-
-  // Huấn luyện
-  tongSoLopHuanLuyen: number;
-  tongSoCoSo: number;
-  tongSoNguoiThamGiaHuanLuyen: number;
-
-  // Tuyên truyền
-  tongSoLopTuyenTruyen: number;
-  tongSoNguoiThamGiaTuyenTruyen: number;
-
-  // Cấp
-  tongCap1: number;
-  tongCap2: number;
-  tongCap3: number;
-  tongCap4: number;
-  tongCap5: number;
-
-  // Phương tiện / CBCS
-  tongSoPhuongTien: number;
-  tongSoCbcs: number;
-
-  // Thiệt hại
-  tongThietHai: number;
-}
-
-/**
- * =========================
- * MOCK DATA
- * =========================
- */
+// MOCK DATA
 const mockRows: Row[] = [
   {
-    id: '1',
-    tuNgay: new Date('2026-01-01'),
-    denNgay: new Date('2026-01-07'),
-    tuan: '1',
-    bienBan: 45,
-    dinhKy: 40,
-    dotXuat: 5,
-    nhom1: 28,
-    nhom2: 17,
-    huongDan: 32,
-    soHoa: 44,
-    soBienBan: 12,
-    soHanhVi: 15,
-    soTien: 320,
-    pc06_1: 2,
-    pc07_1: 1,
-    pc08_1: 0,
-    pc09_1: 1,
-    pc06_2: 1,
-    pc07_2: 0,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 2,
-    soCoSo: 3,
-    soNguoiThamGiaHuanLuyen: 120,
-    soLopTuyenTruyen: 1,
-    soNguoiThamGiaTuyenTruyen: 85,
-    cap1: 2,
-    cap2: 1,
-    cap3: 0,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 3,
-    soCbcs: 15,
-    thietHai: 1250,
+    id: 'd0b01266-190e-47db-9b60-567645b6da9f',
+    schemaId: 'a8ed71a7-bd5b-424f-82b8-06497e1f84d2',
+    name: 'LTT 1',
+    dataValues: {
+      coSo: 'Công ty TNHH Kỹ Thuật Tạo Khuôn LONGFA Việt Nam',
+      canBo: 'Đại úy Nguyễn Đức Anh',
+      chiHuy: 'Trung tá Văn Hoàng Hân',
+      diaBan: 'phường Tân Hiệp và phường Tân Khánh',
+      sources: {
+        docx: {
+          files: ['/LTT/templates/02. Mẫu danh sach diem danh.docx'],
+        },
+        excel: {
+          file: '/LTT/excel/LTT.xlsx',
+        },
+      },
+      daiDienCoSo: 'HE JINPING',
+      ngayHuanLuyen: ['19/10/2026', '20/10/2026', '21/10/2026'],
+      canBoHuanLuyen: 'Huỳnh Như An',
+    },
+    createdAt: new Date('2026-11-01T07:40:26.886Z'),
+    updatedAt: new Date('2026-11-01T07:40:26.886Z'),
   },
   {
-    id: '2',
-    tuNgay: new Date('2026-01-08'),
-    denNgay: new Date('2026-01-14'),
-    tuan: '2',
-    bienBan: 52,
-    dinhKy: 48,
-    dotXuat: 4,
-    nhom1: 31,
-    nhom2: 21,
-    huongDan: 38,
-    soHoa: 50,
-    soBienBan: 15,
-    soHanhVi: 19,
-    soTien: 450,
-    pc06_1: 1,
-    pc07_1: 2,
-    pc08_1: 0,
-    pc09_1: 1,
-    pc06_2: 0,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 3,
-    soCoSo: 2,
-    soNguoiThamGiaHuanLuyen: 160,
-    soLopTuyenTruyen: 2,
-    soNguoiThamGiaTuyenTruyen: 120,
-    cap1: 1,
-    cap2: 2,
-    cap3: 1,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 5,
-    soCbcs: 22,
-    thietHai: 850,
-  },
-  {
-    id: '3',
-    tuNgay: new Date('2026-01-15'),
-    denNgay: new Date('2026-01-21'),
-    tuan: '3',
-    bienBan: 38,
-    dinhKy: 35,
-    dotXuat: 3,
-    nhom1: 22,
-    nhom2: 16,
-    huongDan: 29,
-    soHoa: 37,
-    soBienBan: 9,
-    soHanhVi: 11,
-    soTien: 275,
-    pc06_1: 0,
-    pc07_1: 1,
-    pc08_1: 1,
-    pc09_1: 0,
-    pc06_2: 1,
-    pc07_2: 0,
-    pc08_2: 0,
-    pc09_2: 1,
-    soLopHuanLuyen: 1,
-    soCoSo: 4,
-    soNguoiThamGiaHuanLuyen: 75,
-    soLopTuyenTruyen: 1,
-    soNguoiThamGiaTuyenTruyen: 65,
-    cap1: 0,
-    cap2: 1,
-    cap3: 1,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 2,
-    soCbcs: 11,
-    thietHai: 3200,
-  },
-  {
-    id: '4',
-    tuNgay: new Date('2026-01-22'),
-    denNgay: new Date('2026-01-28'),
-    tuan: '4',
-    bienBan: 61,
-    dinhKy: 56,
-    dotXuat: 5,
-    nhom1: 37,
-    nhom2: 24,
-    huongDan: 45,
-    soHoa: 59,
-    soBienBan: 18,
-    soHanhVi: 23,
-    soTien: 620,
-    pc06_1: 2,
-    pc07_1: 1,
-    pc08_1: 1,
-    pc09_1: 0,
-    pc06_2: 1,
-    pc07_2: 1,
-    pc08_2: 0,
-    pc09_2: 1,
-    soLopHuanLuyen: 4,
-    soCoSo: 5,
-    soNguoiThamGiaHuanLuyen: 210,
-    soLopTuyenTruyen: 2,
-    soNguoiThamGiaTuyenTruyen: 180,
-    cap1: 2,
-    cap2: 2,
-    cap3: 1,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 6,
-    soCbcs: 28,
-    thietHai: 5600,
-  },
-  {
-    id: '5',
-    tuNgay: new Date('2026-01-29'),
-    denNgay: new Date('2026-02-04'),
-    tuan: '5',
-    bienBan: 47,
-    dinhKy: 44,
-    dotXuat: 3,
-    nhom1: 29,
-    nhom2: 18,
-    huongDan: 34,
-    soHoa: 45,
-    soBienBan: 11,
-    soHanhVi: 14,
-    soTien: 390,
-    pc06_1: 1,
-    pc07_1: 0,
-    pc08_1: 1,
-    pc09_1: 1,
-    pc06_2: 0,
-    pc07_2: 1,
-    pc08_2: 0,
-    pc09_2: 0,
-    soLopHuanLuyen: 2,
-    soCoSo: 3,
-    soNguoiThamGiaHuanLuyen: 95,
-    soLopTuyenTruyen: 2,
-    soNguoiThamGiaTuyenTruyen: 145,
-    cap1: 1,
-    cap2: 1,
-    cap3: 0,
-    cap4: 1,
-    cap5: 0,
-    soPhuongTien: 4,
-    soCbcs: 19,
-    thietHai: 1200,
-  },
-
-  {
-    id: '6',
-    tuNgay: new Date('2026-02-05'),
-    denNgay: new Date('2026-02-11'),
-    tuan: '6',
-    bienBan: 73,
-    dinhKy: 68,
-    dotXuat: 5,
-    nhom1: 41,
-    nhom2: 32,
-    huongDan: 52,
-    soHoa: 70,
-    soBienBan: 21,
-    soHanhVi: 27,
-    soTien: 710,
-    pc06_1: 2,
-    pc07_1: 2,
-    pc08_1: 1,
-    pc09_1: 0,
-    pc06_2: 1,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 3,
-    soCoSo: 6,
-    soNguoiThamGiaHuanLuyen: 230,
-    soLopTuyenTruyen: 3,
-    soNguoiThamGiaTuyenTruyen: 250,
-    cap1: 3,
-    cap2: 1,
-    cap3: 1,
-    cap4: 0,
-    cap5: 1,
-    soPhuongTien: 7,
-    soCbcs: 34,
-    thietHai: 8900,
-  },
-
-  {
-    id: '7',
-    tuNgay: new Date('2026-02-12'),
-    denNgay: new Date('2026-02-18'),
-    tuan: '7',
-    bienBan: 66,
-    dinhKy: 61,
-    dotXuat: 5,
-    nhom1: 39,
-    nhom2: 27,
-    huongDan: 48,
-    soHoa: 63,
-    soBienBan: 17,
-    soHanhVi: 20,
-    soTien: 580,
-    pc06_1: 1,
-    pc07_1: 1,
-    pc08_1: 0,
-    pc09_1: 1,
-    pc06_2: 1,
-    pc07_2: 0,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 2,
-    soCoSo: 4,
-    soNguoiThamGiaHuanLuyen: 180,
-    soLopTuyenTruyen: 2,
-    soNguoiThamGiaTuyenTruyen: 160,
-    cap1: 1,
-    cap2: 2,
-    cap3: 1,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 5,
-    soCbcs: 25,
-    thietHai: 4300,
-  },
-
-  {
-    id: '8',
-    tuNgay: new Date('2026-02-19'),
-    denNgay: new Date('2026-02-25'),
-    tuan: '8',
-    bienBan: 81,
-    dinhKy: 76,
-    dotXuat: 5,
-    nhom1: 48,
-    nhom2: 33,
-    huongDan: 61,
-    soHoa: 79,
-    soBienBan: 25,
-    soHanhVi: 30,
-    soTien: 920,
-    pc06_1: 2,
-    pc07_1: 2,
-    pc08_1: 1,
-    pc09_1: 1,
-    pc06_2: 1,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 4,
-    soCoSo: 7,
-    soNguoiThamGiaHuanLuyen: 310,
-    soLopTuyenTruyen: 3,
-    soNguoiThamGiaTuyenTruyen: 280,
-    cap1: 2,
-    cap2: 2,
-    cap3: 1,
-    cap4: 1,
-    cap5: 0,
-    soPhuongTien: 8,
-    soCbcs: 41,
-    thietHai: 11500,
-  },
-
-  {
-    id: '9',
-    tuNgay: new Date('2026-02-26'),
-    denNgay: new Date('2026-03-04'),
-    tuan: '9',
-    bienBan: 55,
-    dinhKy: 51,
-    dotXuat: 4,
-    nhom1: 32,
-    nhom2: 23,
-    huongDan: 42,
-    soHoa: 53,
-    soBienBan: 14,
-    soHanhVi: 18,
-    soTien: 470,
-    pc06_1: 1,
-    pc07_1: 0,
-    pc08_1: 1,
-    pc09_1: 0,
-    pc06_2: 0,
-    pc07_2: 1,
-    pc08_2: 0,
-    pc09_2: 1,
-    soLopHuanLuyen: 2,
-    soCoSo: 3,
-    soNguoiThamGiaHuanLuyen: 130,
-    soLopTuyenTruyen: 2,
-    soNguoiThamGiaTuyenTruyen: 190,
-    cap1: 1,
-    cap2: 1,
-    cap3: 1,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 4,
-    soCbcs: 20,
-    thietHai: 2700,
-  },
-
-  {
-    id: '10',
-    tuNgay: new Date('2026-03-05'),
-    denNgay: new Date('2026-03-11'),
-    tuan: '10',
-    bienBan: 92,
-    dinhKy: 85,
-    dotXuat: 7,
-    nhom1: 56,
-    nhom2: 36,
-    huongDan: 70,
-    soHoa: 89,
-    soBienBan: 28,
-    soHanhVi: 34,
-    soTien: 1250,
-    pc06_1: 3,
-    pc07_1: 2,
-    pc08_1: 1,
-    pc09_1: 1,
-    pc06_2: 2,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 5,
-    soCoSo: 8,
-    soNguoiThamGiaHuanLuyen: 420,
-    soLopTuyenTruyen: 4,
-    soNguoiThamGiaTuyenTruyen: 360,
-    cap1: 3,
-    cap2: 2,
-    cap3: 1,
-    cap4: 1,
-    cap5: 0,
-    soPhuongTien: 10,
-    soCbcs: 52,
-    thietHai: 15700,
-  },
-
-  {
-    id: '11',
-    tuNgay: new Date('2026-03-12'),
-    denNgay: new Date('2026-03-18'),
-    tuan: '11',
-    bienBan: 78,
-    dinhKy: 72,
-    dotXuat: 6,
-    nhom1: 45,
-    nhom2: 33,
-    huongDan: 59,
-    soHoa: 75,
-    soBienBan: 22,
-    soHanhVi: 26,
-    soTien: 830,
-    pc06_1: 2,
-    pc07_1: 1,
-    pc08_1: 1,
-    pc09_1: 0,
-    pc06_2: 1,
-    pc07_2: 1,
-    pc08_2: 0,
-    pc09_2: 1,
-    soLopHuanLuyen: 3,
-    soCoSo: 6,
-    soNguoiThamGiaHuanLuyen: 270,
-    soLopTuyenTruyen: 3,
-    soNguoiThamGiaTuyenTruyen: 245,
-    cap1: 2,
-    cap2: 1,
-    cap3: 1,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 7,
-    soCbcs: 38,
-    thietHai: 6200,
-  },
-
-  {
-    id: '12',
-    tuNgay: new Date('2026-03-19'),
-    denNgay: new Date('2026-03-25'),
-    tuan: '12',
-    bienBan: 103,
-    dinhKy: 97,
-    dotXuat: 6,
-    nhom1: 62,
-    nhom2: 41,
-    huongDan: 78,
-    soHoa: 100,
-    soBienBan: 31,
-    soHanhVi: 39,
-    soTien: 1480,
-    pc06_1: 3,
-    pc07_1: 2,
-    pc08_1: 2,
-    pc09_1: 1,
-    pc06_2: 2,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 1,
-    soLopHuanLuyen: 5,
-    soCoSo: 9,
-    soNguoiThamGiaHuanLuyen: 510,
-    soLopTuyenTruyen: 4,
-    soNguoiThamGiaTuyenTruyen: 430,
-    cap1: 3,
-    cap2: 2,
-    cap3: 2,
-    cap4: 0,
-    cap5: 1,
-    soPhuongTien: 12,
-    soCbcs: 60,
-    thietHai: 18900,
-  },
-
-  {
-    id: '13',
-    tuNgay: new Date('2026-03-26'),
-    denNgay: new Date('2026-04-01'),
-    tuan: '13',
-    bienBan: 69,
-    dinhKy: 65,
-    dotXuat: 4,
-    nhom1: 40,
-    nhom2: 29,
-    huongDan: 51,
-    soHoa: 67,
-    soBienBan: 19,
-    soHanhVi: 23,
-    soTien: 670,
-    pc06_1: 1,
-    pc07_1: 1,
-    pc08_1: 0,
-    pc09_1: 1,
-    pc06_2: 0,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 3,
-    soCoSo: 5,
-    soNguoiThamGiaHuanLuyen: 205,
-    soLopTuyenTruyen: 2,
-    soNguoiThamGiaTuyenTruyen: 175,
-    cap1: 1,
-    cap2: 2,
-    cap3: 0,
-    cap4: 1,
-    cap5: 0,
-    soPhuongTien: 6,
-    soCbcs: 31,
-    thietHai: 4800,
-  },
-
-  {
-    id: '14',
-    tuNgay: new Date('2026-04-02'),
-    denNgay: new Date('2026-04-08'),
-    tuan: '14',
-    bienBan: 87,
-    dinhKy: 82,
-    dotXuat: 5,
-    nhom1: 51,
-    nhom2: 36,
-    huongDan: 66,
-    soHoa: 84,
-    soBienBan: 27,
-    soHanhVi: 32,
-    soTien: 980,
-    pc06_1: 2,
-    pc07_1: 2,
-    pc08_1: 1,
-    pc09_1: 1,
-    pc06_2: 1,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 4,
-    soCoSo: 7,
-    soNguoiThamGiaHuanLuyen: 350,
-    soLopTuyenTruyen: 3,
-    soNguoiThamGiaTuyenTruyen: 290,
-    cap1: 2,
-    cap2: 2,
-    cap3: 1,
-    cap4: 1,
-    cap5: 0,
-    soPhuongTien: 9,
-    soCbcs: 46,
-    thietHai: 7300,
-  },
-
-  {
-    id: '15',
-    tuNgay: new Date('2026-04-09'),
-    denNgay: new Date('2026-04-15'),
-    tuan: '15',
-    bienBan: 96,
-    dinhKy: 91,
-    dotXuat: 5,
-    nhom1: 58,
-    nhom2: 38,
-    huongDan: 72,
-    soHoa: 93,
-    soBienBan: 29,
-    soHanhVi: 35,
-    soTien: 1120,
-    pc06_1: 3,
-    pc07_1: 1,
-    pc08_1: 1,
-    pc09_1: 1,
-    pc06_2: 2,
-    pc07_2: 1,
-    pc08_2: 1,
-    pc09_2: 1,
-    soLopHuanLuyen: 5,
-    soCoSo: 8,
-    soNguoiThamGiaHuanLuyen: 460,
-    soLopTuyenTruyen: 4,
-    soNguoiThamGiaTuyenTruyen: 380,
-    cap1: 3,
-    cap2: 2,
-    cap3: 1,
-    cap4: 1,
-    cap5: 1,
-    soPhuongTien: 11,
-    soCbcs: 55,
-    thietHai: 9200,
-  },
-
-  {
-    id: '16',
-    tuNgay: new Date('2026-04-16'),
-    denNgay: new Date('2026-04-22'),
-    tuan: '16',
-    bienBan: 58,
-    dinhKy: 54,
-    dotXuat: 4,
-    nhom1: 34,
-    nhom2: 24,
-    huongDan: 43,
-    soHoa: 56,
-    soBienBan: 16,
-    soHanhVi: 20,
-    soTien: 540,
-    pc06_1: 1,
-    pc07_1: 1,
-    pc08_1: 0,
-    pc09_1: 0,
-    pc06_2: 1,
-    pc07_2: 0,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 2,
-    soCoSo: 4,
-    soNguoiThamGiaHuanLuyen: 150,
-    soLopTuyenTruyen: 2,
-    soNguoiThamGiaTuyenTruyen: 130,
-    cap1: 1,
-    cap2: 1,
-    cap3: 1,
-    cap4: 0,
-    cap5: 0,
-    soPhuongTien: 5,
-    soCbcs: 27,
-    thietHai: 3500,
-  },
-
-  {
-    id: '17',
-    tuNgay: new Date('2026-04-23'),
-    denNgay: new Date('2026-04-29'),
-    tuan: '17',
-    bienBan: 112,
-    dinhKy: 106,
-    dotXuat: 6,
-    nhom1: 68,
-    nhom2: 44,
-    huongDan: 85,
-    soHoa: 109,
-    soBienBan: 34,
-    soHanhVi: 42,
-    soTien: 1360,
-    pc06_1: 3,
-    pc07_1: 2,
-    pc08_1: 1,
-    pc09_1: 1,
-    pc06_2: 2,
-    pc07_2: 2,
-    pc08_2: 1,
-    pc09_2: 0,
-    soLopHuanLuyen: 6,
-    soCoSo: 10,
-    soNguoiThamGiaHuanLuyen: 580,
-    soLopTuyenTruyen: 5,
-    soNguoiThamGiaTuyenTruyen: 490,
-    cap1: 3,
-    cap2: 3,
-    cap3: 1,
-    cap4: 1,
-    cap5: 0,
-    soPhuongTien: 14,
-    soCbcs: 68,
-    thietHai: 12400,
-  },
-
-  {
-    id: '18',
-    tuNgay: new Date('2026-04-30'),
-    denNgay: new Date('2026-05-06'),
-    tuan: '18',
-    bienBan: 124,
-    dinhKy: 117,
-    dotXuat: 7,
-    nhom1: 74,
-    nhom2: 50,
-    huongDan: 92,
-    soHoa: 121,
-    soBienBan: 38,
-    soHanhVi: 47,
-    soTien: 1590,
-    pc06_1: 3,
-    pc07_1: 3,
-    pc08_1: 2,
-    pc09_1: 1,
-    pc06_2: 2,
-    pc07_2: 2,
-    pc08_2: 1,
-    pc09_2: 1,
-    soLopHuanLuyen: 6,
-    soCoSo: 11,
-    soNguoiThamGiaHuanLuyen: 640,
-    soLopTuyenTruyen: 5,
-    soNguoiThamGiaTuyenTruyen: 520,
-    cap1: 4,
-    cap2: 2,
-    cap3: 2,
-    cap4: 1,
-    cap5: 1,
-    soPhuongTien: 16,
-    soCbcs: 74,
-    thietHai: 14800,
-  },
-
-  {
-    id: '19',
-    tuNgay: new Date('2026-05-07'),
-    denNgay: new Date('2026-05-13'),
-    tuan: '19',
-    bienBan: 135,
-    dinhKy: 129,
-    dotXuat: 6,
-    nhom1: 80,
-    nhom2: 55,
-    huongDan: 101,
-    soHoa: 132,
-    soBienBan: 41,
-    soHanhVi: 49,
-    soTien: 1720,
-    pc06_1: 4,
-    pc07_1: 2,
-    pc08_1: 2,
-    pc09_1: 1,
-    pc06_2: 2,
-    pc07_2: 2,
-    pc08_2: 1,
-    pc09_2: 1,
-    soLopHuanLuyen: 7,
-    soCoSo: 12,
-    soNguoiThamGiaHuanLuyen: 710,
-    soLopTuyenTruyen: 6,
-    soNguoiThamGiaTuyenTruyen: 600,
-    cap1: 4,
-    cap2: 3,
-    cap3: 2,
-    cap4: 1,
-    cap5: 0,
-    soPhuongTien: 18,
-    soCbcs: 82,
-    thietHai: 17600,
-  },
-
-  {
-    id: '20',
-    tuNgay: new Date('2026-05-14'),
-    denNgay: new Date('2026-05-20'),
-    tuan: '20',
-    bienBan: 148,
-    dinhKy: 141,
-    dotXuat: 7,
-    nhom1: 87,
-    nhom2: 61,
-    huongDan: 109,
-    soHoa: 145,
-    soBienBan: 45,
-    soHanhVi: 54,
-    soTien: 1890,
-    pc06_1: 4,
-    pc07_1: 3,
-    pc08_1: 2,
-    pc09_1: 1,
-    pc06_2: 3,
-    pc07_2: 2,
-    pc08_2: 1,
-    pc09_2: 1,
-    soLopHuanLuyen: 7,
-    soCoSo: 13,
-    soNguoiThamGiaHuanLuyen: 780,
-    soLopTuyenTruyen: 6,
-    soNguoiThamGiaTuyenTruyen: 650,
-    cap1: 4,
-    cap2: 3,
-    cap3: 2,
-    cap4: 1,
-    cap5: 1,
-    soPhuongTien: 20,
-    soCbcs: 91,
-    thietHai: 21300,
-  },
-
-  {
-    id: '21',
-    tuNgay: new Date('2026-05-21'),
-    denNgay: new Date('2026-05-27'),
-    tuan: '21',
-    bienBan: 157,
-    dinhKy: 150,
-    dotXuat: 7,
-    nhom1: 92,
-    nhom2: 65,
-    huongDan: 116,
-    soHoa: 154,
-    soBienBan: 48,
-    soHanhVi: 58,
-    soTien: 2050,
-    pc06_1: 4,
-    pc07_1: 3,
-    pc08_1: 2,
-    pc09_1: 2,
-    pc06_2: 3,
-    pc07_2: 2,
-    pc08_2: 1,
-    pc09_2: 1,
-    soLopHuanLuyen: 8,
-    soCoSo: 14,
-    soNguoiThamGiaHuanLuyen: 850,
-    soLopTuyenTruyen: 7,
-    soNguoiThamGiaTuyenTruyen: 720,
-    cap1: 5,
-    cap2: 3,
-    cap3: 2,
-    cap4: 1,
-    cap5: 1,
-    soPhuongTien: 22,
-    soCbcs: 98,
-    thietHai: 24600,
-  },
-
-  {
-    id: '22',
-    tuNgay: new Date('2026-05-28'),
-    denNgay: new Date('2026-06-03'),
-    tuan: '22',
-    bienBan: 166,
-    dinhKy: 158,
-    dotXuat: 8,
-    nhom1: 97,
-    nhom2: 69,
-    huongDan: 123,
-    soHoa: 163,
-    soBienBan: 51,
-    soHanhVi: 63,
-    soTien: 2280,
-    pc06_1: 5,
-    pc07_1: 3,
-    pc08_1: 2,
-    pc09_1: 2,
-    pc06_2: 3,
-    pc07_2: 2,
-    pc08_2: 2,
-    pc09_2: 1,
-    soLopHuanLuyen: 8,
-    soCoSo: 15,
-    soNguoiThamGiaHuanLuyen: 920,
-    soLopTuyenTruyen: 7,
-    soNguoiThamGiaTuyenTruyen: 780,
-    cap1: 5,
-    cap2: 4,
-    cap3: 2,
-    cap4: 1,
-    cap5: 1,
-    soPhuongTien: 24,
-    soCbcs: 105,
-    thietHai: 28100,
-  },
-
-  {
-    id: '23',
-    tuNgay: new Date('2026-06-04'),
-    denNgay: new Date('2026-06-10'),
-    tuan: '23',
-    bienBan: 178,
-    dinhKy: 169,
-    dotXuat: 9,
-    nhom1: 105,
-    nhom2: 73,
-    huongDan: 132,
-    soHoa: 174,
-    soBienBan: 56,
-    soHanhVi: 69,
-    soTien: 2470,
-    pc06_1: 5,
-    pc07_1: 4,
-    pc08_1: 2,
-    pc09_1: 2,
-    pc06_2: 3,
-    pc07_2: 3,
-    pc08_2: 2,
-    pc09_2: 1,
-    soLopHuanLuyen: 9,
-    soCoSo: 16,
-    soNguoiThamGiaHuanLuyen: 1010,
-    soLopTuyenTruyen: 8,
-    soNguoiThamGiaTuyenTruyen: 850,
-    cap1: 5,
-    cap2: 4,
-    cap3: 3,
-    cap4: 1,
-    cap5: 1,
-    soPhuongTien: 26,
-    soCbcs: 114,
-    thietHai: 32500,
-  },
-
-  {
-    id: '24',
-    tuNgay: new Date('2026-06-11'),
-    denNgay: new Date('2026-06-17'),
-    tuan: '24',
-    bienBan: 189,
-    dinhKy: 179,
-    dotXuat: 10,
-    nhom1: 111,
-    nhom2: 78,
-    huongDan: 140,
-    soHoa: 185,
-    soBienBan: 61,
-    soHanhVi: 74,
-    soTien: 2690,
-    pc06_1: 5,
-    pc07_1: 4,
-    pc08_1: 3,
-    pc09_1: 2,
-    pc06_2: 4,
-    pc07_2: 3,
-    pc08_2: 2,
-    pc09_2: 1,
-    soLopHuanLuyen: 9,
-    soCoSo: 17,
-    soNguoiThamGiaHuanLuyen: 1090,
-    soLopTuyenTruyen: 8,
-    soNguoiThamGiaTuyenTruyen: 920,
-    cap1: 6,
-    cap2: 4,
-    cap3: 3,
-    cap4: 1,
-    cap5: 1,
-    soPhuongTien: 28,
-    soCbcs: 123,
-    thietHai: 36800,
-  },
-
-  {
-    id: '25',
-    tuNgay: new Date('2026-06-18'),
-    denNgay: new Date('2026-06-24'),
-    tuan: '25',
-    bienBan: 201,
-    dinhKy: 190,
-    dotXuat: 11,
-    nhom1: 119,
-    nhom2: 82,
-    huongDan: 149,
-    soHoa: 197,
-    soBienBan: 66,
-    soHanhVi: 80,
-    soTien: 2910,
-    pc06_1: 6,
-    pc07_1: 4,
-    pc08_1: 3,
-    pc09_1: 2,
-    pc06_2: 4,
-    pc07_2: 3,
-    pc08_2: 2,
-    pc09_2: 1,
-    soLopHuanLuyen: 10,
-    soCoSo: 18,
-    soNguoiThamGiaHuanLuyen: 1180,
-    soLopTuyenTruyen: 9,
-    soNguoiThamGiaTuyenTruyen: 980,
-    cap1: 6,
-    cap2: 5,
-    cap3: 3,
-    cap4: 2,
-    cap5: 1,
-    soPhuongTien: 30,
-    soCbcs: 132,
-    thietHai: 41500,
-  },
-
-  {
-    id: '26',
-    tuNgay: new Date('2026-06-25'),
-    denNgay: new Date('2026-07-01'),
-    tuan: '26',
-    bienBan: 215,
-    dinhKy: 204,
-    dotXuat: 11,
-    nhom1: 126,
-    nhom2: 89,
-    huongDan: 158,
-    soHoa: 210,
-    soBienBan: 70,
-    soHanhVi: 85,
-    soTien: 3180,
-    pc06_1: 6,
-    pc07_1: 5,
-    pc08_1: 3,
-    pc09_1: 2,
-    pc06_2: 4,
-    pc07_2: 4,
-    pc08_2: 2,
-    pc09_2: 1,
-    soLopHuanLuyen: 10,
-    soCoSo: 19,
-    soNguoiThamGiaHuanLuyen: 1260,
-    soLopTuyenTruyen: 9,
-    soNguoiThamGiaTuyenTruyen: 1050,
-    cap1: 7,
-    cap2: 5,
-    cap3: 3,
-    cap4: 2,
-    cap5: 1,
-    soPhuongTien: 32,
-    soCbcs: 141,
-    thietHai: 46200,
-  },
-
-  {
-    id: '27',
-    tuNgay: new Date('2026-07-02'),
-    denNgay: new Date('2026-07-08'),
-    tuan: '27',
-    bienBan: 228,
-    dinhKy: 216,
-    dotXuat: 12,
-    nhom1: 134,
-    nhom2: 94,
-    huongDan: 167,
-    soHoa: 223,
-    soBienBan: 74,
-    soHanhVi: 90,
-    soTien: 3470,
-    pc06_1: 7,
-    pc07_1: 5,
-    pc08_1: 3,
-    pc09_1: 2,
-    pc06_2: 5,
-    pc07_2: 4,
-    pc08_2: 2,
-    pc09_2: 1,
-    soLopHuanLuyen: 11,
-    soCoSo: 20,
-    soNguoiThamGiaHuanLuyen: 1350,
-    soLopTuyenTruyen: 10,
-    soNguoiThamGiaTuyenTruyen: 1120,
-    cap1: 7,
-    cap2: 6,
-    cap3: 4,
-    cap4: 2,
-    cap5: 1,
-    soPhuongTien: 34,
-    soCbcs: 150,
-    thietHai: 51900,
-  },
-
-  {
-    id: '28',
-    tuNgay: new Date('2026-07-09'),
-    denNgay: new Date('2026-07-15'),
-    tuan: '28',
-    bienBan: 241,
-    dinhKy: 228,
-    dotXuat: 13,
-    nhom1: 141,
-    nhom2: 100,
-    huongDan: 176,
-    soHoa: 236,
-    soBienBan: 79,
-    soHanhVi: 96,
-    soTien: 3760,
-    pc06_1: 7,
-    pc07_1: 6,
-    pc08_1: 4,
-    pc09_1: 2,
-    pc06_2: 5,
-    pc07_2: 4,
-    pc08_2: 3,
-    pc09_2: 1,
-    soLopHuanLuyen: 11,
-    soCoSo: 21,
-    soNguoiThamGiaHuanLuyen: 1440,
-    soLopTuyenTruyen: 10,
-    soNguoiThamGiaTuyenTruyen: 1200,
-    cap1: 8,
-    cap2: 6,
-    cap3: 4,
-    cap4: 2,
-    cap5: 1,
-    soPhuongTien: 36,
-    soCbcs: 159,
-    thietHai: 57400,
-  },
-
-  {
-    id: '29',
-    tuNgay: new Date('2026-07-16'),
-    denNgay: new Date('2026-07-22'),
-    tuan: '29',
-    bienBan: 255,
-    dinhKy: 242,
-    dotXuat: 13,
-    nhom1: 149,
-    nhom2: 106,
-    huongDan: 185,
-    soHoa: 250,
-    soBienBan: 83,
-    soHanhVi: 101,
-    soTien: 4050,
-    pc06_1: 8,
-    pc07_1: 6,
-    pc08_1: 4,
-    pc09_1: 3,
-    pc06_2: 6,
-    pc07_2: 5,
-    pc08_2: 3,
-    pc09_2: 1,
-    soLopHuanLuyen: 12,
-    soCoSo: 22,
-    soNguoiThamGiaHuanLuyen: 1530,
-    soLopTuyenTruyen: 11,
-    soNguoiThamGiaTuyenTruyen: 1280,
-    cap1: 8,
-    cap2: 7,
-    cap3: 4,
-    cap4: 2,
-    cap5: 1,
-    soPhuongTien: 38,
-    soCbcs: 168,
-    thietHai: 63200,
-  },
-
-  {
-    id: '30',
-    tuNgay: new Date('2026-07-23'),
-    denNgay: new Date('2026-07-29'),
-    tuan: '30',
-    bienBan: 269,
-    dinhKy: 255,
-    dotXuat: 14,
-    nhom1: 157,
-    nhom2: 112,
-    huongDan: 195,
-    soHoa: 264,
-    soBienBan: 88,
-    soHanhVi: 107,
-    soTien: 4390,
-    pc06_1: 8,
-    pc07_1: 7,
-    pc08_1: 4,
-    pc09_1: 3,
-    pc06_2: 6,
-    pc07_2: 5,
-    pc08_2: 3,
-    pc09_2: 2,
-    soLopHuanLuyen: 12,
-    soCoSo: 23,
-    soNguoiThamGiaHuanLuyen: 1620,
-    soLopTuyenTruyen: 11,
-    soNguoiThamGiaTuyenTruyen: 1370,
-    cap1: 9,
-    cap2: 7,
-    cap3: 5,
-    cap4: 2,
-    cap5: 1,
-    soPhuongTien: 40,
-    soCbcs: 177,
-    thietHai: 69700,
-  },
-
-  {
-    id: '31',
-    tuNgay: new Date('2026-07-30'),
-    denNgay: new Date('2026-08-05'),
-    tuan: '31',
-    bienBan: 283,
-    dinhKy: 269,
-    dotXuat: 14,
-    nhom1: 165,
-    nhom2: 118,
-    huongDan: 204,
-    soHoa: 278,
-    soBienBan: 92,
-    soHanhVi: 112,
-    soTien: 4680,
-    pc06_1: 9,
-    pc07_1: 7,
-    pc08_1: 5,
-    pc09_1: 3,
-    pc06_2: 7,
-    pc07_2: 5,
-    pc08_2: 3,
-    pc09_2: 2,
-    soLopHuanLuyen: 13,
-    soCoSo: 24,
-    soNguoiThamGiaHuanLuyen: 1710,
-    soLopTuyenTruyen: 12,
-    soNguoiThamGiaTuyenTruyen: 1450,
-    cap1: 9,
-    cap2: 8,
-    cap3: 5,
-    cap4: 2,
-    cap5: 1,
-    soPhuongTien: 42,
-    soCbcs: 186,
-    thietHai: 75100,
-  },
-
-  {
-    id: '32',
-    tuNgay: new Date('2026-08-06'),
-    denNgay: new Date('2026-08-12'),
-    tuan: '32',
-    bienBan: 297,
-    dinhKy: 282,
-    dotXuat: 15,
-    nhom1: 173,
-    nhom2: 124,
-    huongDan: 214,
-    soHoa: 292,
-    soBienBan: 97,
-    soHanhVi: 118,
-    soTien: 5010,
-    pc06_1: 9,
-    pc07_1: 8,
-    pc08_1: 5,
-    pc09_1: 3,
-    pc06_2: 7,
-    pc07_2: 6,
-    pc08_2: 4,
-    pc09_2: 2,
-    soLopHuanLuyen: 13,
-    soCoSo: 25,
-    soNguoiThamGiaHuanLuyen: 1800,
-    soLopTuyenTruyen: 12,
-    soNguoiThamGiaTuyenTruyen: 1530,
-    cap1: 10,
-    cap2: 8,
-    cap3: 5,
-    cap4: 3,
-    cap5: 1,
-    soPhuongTien: 44,
-    soCbcs: 195,
-    thietHai: 81600,
-  },
-
-  {
-    id: '33',
-    tuNgay: new Date('2026-08-13'),
-    denNgay: new Date('2026-08-19'),
-    tuan: '33',
-    bienBan: 312,
-    dinhKy: 296,
-    dotXuat: 16,
-    nhom1: 182,
-    nhom2: 130,
-    huongDan: 224,
-    soHoa: 307,
-    soBienBan: 102,
-    soHanhVi: 124,
-    soTien: 5370,
-    pc06_1: 10,
-    pc07_1: 8,
-    pc08_1: 5,
-    pc09_1: 4,
-    pc06_2: 8,
-    pc07_2: 6,
-    pc08_2: 4,
-    pc09_2: 2,
-    soLopHuanLuyen: 14,
-    soCoSo: 26,
-    soNguoiThamGiaHuanLuyen: 1900,
-    soLopTuyenTruyen: 13,
-    soNguoiThamGiaTuyenTruyen: 1620,
-    cap1: 10,
-    cap2: 9,
-    cap3: 6,
-    cap4: 3,
-    cap5: 1,
-    soPhuongTien: 46,
-    soCbcs: 204,
-    thietHai: 88700,
-  },
-
-  {
-    id: '34',
-    tuNgay: new Date('2026-08-20'),
-    denNgay: new Date('2026-08-26'),
-    tuan: '34',
-    bienBan: 326,
-    dinhKy: 310,
-    dotXuat: 16,
-    nhom1: 190,
-    nhom2: 136,
-    huongDan: 234,
-    soHoa: 321,
-    soBienBan: 108,
-    soHanhVi: 131,
-    soTien: 5740,
-    pc06_1: 10,
-    pc07_1: 9,
-    pc08_1: 6,
-    pc09_1: 4,
-    pc06_2: 8,
-    pc07_2: 7,
-    pc08_2: 4,
-    pc09_2: 2,
-    soLopHuanLuyen: 14,
-    soCoSo: 27,
-    soNguoiThamGiaHuanLuyen: 1990,
-    soLopTuyenTruyen: 13,
-    soNguoiThamGiaTuyenTruyen: 1700,
-    cap1: 11,
-    cap2: 9,
-    cap3: 6,
-    cap4: 3,
-    cap5: 1,
-    soPhuongTien: 48,
-    soCbcs: 213,
-    thietHai: 95400,
-  },
-
-  {
-    id: '35',
-    tuNgay: new Date('2026-08-27'),
-    denNgay: new Date('2026-09-02'),
-    tuan: '35',
-    bienBan: 341,
-    dinhKy: 324,
-    dotXuat: 17,
-    nhom1: 199,
-    nhom2: 142,
-    huongDan: 245,
-    soHoa: 336,
-    soBienBan: 113,
-    soHanhVi: 137,
-    soTien: 6120,
-    pc06_1: 11,
-    pc07_1: 9,
-    pc08_1: 6,
-    pc09_1: 4,
-    pc06_2: 9,
-    pc07_2: 7,
-    pc08_2: 5,
-    pc09_2: 2,
-    soLopHuanLuyen: 15,
-    soCoSo: 28,
-    soNguoiThamGiaHuanLuyen: 2080,
-    soLopTuyenTruyen: 14,
-    soNguoiThamGiaTuyenTruyen: 1790,
-    cap1: 11,
-    cap2: 10,
-    cap3: 6,
-    cap4: 3,
-    cap5: 2,
-    soPhuongTien: 50,
-    soCbcs: 222,
-    thietHai: 102300,
-  },
-
-  {
-    id: '36',
-    tuNgay: new Date('2026-09-03'),
-    denNgay: new Date('2026-09-09'),
-    tuan: '36',
-    bienBan: 356,
-    dinhKy: 338,
-    dotXuat: 18,
-    nhom1: 207,
-    nhom2: 149,
-    huongDan: 256,
-    soHoa: 350,
-    soBienBan: 118,
-    soHanhVi: 143,
-    soTien: 6510,
-    pc06_1: 11,
-    pc07_1: 10,
-    pc08_1: 7,
-    pc09_1: 4,
-    pc06_2: 9,
-    pc07_2: 8,
-    pc08_2: 5,
-    pc09_2: 3,
-    soLopHuanLuyen: 15,
-    soCoSo: 29,
-    soNguoiThamGiaHuanLuyen: 2180,
-    soLopTuyenTruyen: 14,
-    soNguoiThamGiaTuyenTruyen: 1880,
-    cap1: 12,
-    cap2: 10,
-    cap3: 7,
-    cap4: 3,
-    cap5: 2,
-    soPhuongTien: 52,
-    soCbcs: 231,
-    thietHai: 110800,
-  },
-
-  {
-    id: '37',
-    tuNgay: new Date('2026-09-10'),
-    denNgay: new Date('2026-09-16'),
-    tuan: '37',
-    bienBan: 371,
-    dinhKy: 352,
-    dotXuat: 19,
-    nhom1: 216,
-    nhom2: 155,
-    huongDan: 267,
-    soHoa: 365,
-    soBienBan: 123,
-    soHanhVi: 149,
-    soTien: 6920,
-    pc06_1: 12,
-    pc07_1: 10,
-    pc08_1: 7,
-    pc09_1: 5,
-    pc06_2: 10,
-    pc07_2: 8,
-    pc08_2: 5,
-    pc09_2: 3,
-    soLopHuanLuyen: 16,
-    soCoSo: 30,
-    soNguoiThamGiaHuanLuyen: 2280,
-    soLopTuyenTruyen: 15,
-    soNguoiThamGiaTuyenTruyen: 1970,
-    cap1: 12,
-    cap2: 11,
-    cap3: 7,
-    cap4: 4,
-    cap5: 2,
-    soPhuongTien: 54,
-    soCbcs: 240,
-    thietHai: 119500,
-  },
-
-  {
-    id: '38',
-    tuNgay: new Date('2026-09-17'),
-    denNgay: new Date('2026-09-23'),
-    tuan: '38',
-    bienBan: 386,
-    dinhKy: 365,
-    dotXuat: 21,
-    nhom1: 225,
-    nhom2: 161,
-    huongDan: 278,
-    soHoa: 379,
-    soBienBan: 129,
-    soHanhVi: 156,
-    soTien: 7350,
-    pc06_1: 12,
-    pc07_1: 11,
-    pc08_1: 8,
-    pc09_1: 5,
-    pc06_2: 10,
-    pc07_2: 9,
-    pc08_2: 6,
-    pc09_2: 3,
-    soLopHuanLuyen: 16,
-    soCoSo: 31,
-    soNguoiThamGiaHuanLuyen: 2380,
-    soLopTuyenTruyen: 15,
-    soNguoiThamGiaTuyenTruyen: 2060,
-    cap1: 13,
-    cap2: 11,
-    cap3: 8,
-    cap4: 4,
-    cap5: 2,
-    soPhuongTien: 56,
-    soCbcs: 249,
-    thietHai: 128700,
-  },
-
-  {
-    id: '39',
-    tuNgay: new Date('2026-09-24'),
-    denNgay: new Date('2026-09-30'),
-    tuan: '39',
-    bienBan: 402,
-    dinhKy: 380,
-    dotXuat: 22,
-    nhom1: 234,
-    nhom2: 168,
-    huongDan: 289,
-    soHoa: 395,
-    soBienBan: 134,
-    soHanhVi: 162,
-    soTien: 7810,
-    pc06_1: 13,
-    pc07_1: 11,
-    pc08_1: 8,
-    pc09_1: 5,
-    pc06_2: 11,
-    pc07_2: 9,
-    pc08_2: 6,
-    pc09_2: 3,
-    soLopHuanLuyen: 17,
-    soCoSo: 32,
-    soNguoiThamGiaHuanLuyen: 2480,
-    soLopTuyenTruyen: 16,
-    soNguoiThamGiaTuyenTruyen: 2150,
-    cap1: 13,
-    cap2: 12,
-    cap3: 8,
-    cap4: 4,
-    cap5: 2,
-    soPhuongTien: 58,
-    soCbcs: 258,
-    thietHai: 138200,
-  },
-
-  {
-    id: '40',
-    tuNgay: new Date('2026-10-01'),
-    denNgay: new Date('2026-10-07'),
-    tuan: '40',
-    bienBan: 418,
-    dinhKy: 395,
-    dotXuat: 23,
-    nhom1: 243,
-    nhom2: 175,
-    huongDan: 300,
-    soHoa: 411,
-    soBienBan: 140,
-    soHanhVi: 169,
-    soTien: 8260,
-    pc06_1: 13,
-    pc07_1: 12,
-    pc08_1: 9,
-    pc09_1: 5,
-    pc06_2: 11,
-    pc07_2: 10,
-    pc08_2: 6,
-    pc09_2: 4,
-    soLopHuanLuyen: 17,
-    soCoSo: 33,
-    soNguoiThamGiaHuanLuyen: 2580,
-    soLopTuyenTruyen: 16,
-    soNguoiThamGiaTuyenTruyen: 2240,
-    cap1: 14,
-    cap2: 12,
-    cap3: 9,
-    cap4: 4,
-    cap5: 2,
-    soPhuongTien: 60,
-    soCbcs: 267,
-    thietHai: 149500,
-  },
-
-  {
-    id: '41',
-    tuNgay: new Date('2026-10-08'),
-    denNgay: new Date('2026-10-14'),
-    tuan: '41',
-    bienBan: 431,
-    dinhKy: 407,
-    dotXuat: 24,
-    nhom1: 251,
-    nhom2: 180,
-    huongDan: 309,
-    soHoa: 424,
-    soBienBan: 145,
-    soHanhVi: 175,
-    soTien: 8710,
-    pc06_1: 14,
-    pc07_1: 12,
-    pc08_1: 9,
-    pc09_1: 6,
-    pc06_2: 12,
-    pc07_2: 10,
-    pc08_2: 7,
-    pc09_2: 4,
-    soLopHuanLuyen: 18,
-    soCoSo: 34,
-    soNguoiThamGiaHuanLuyen: 2680,
-    soLopTuyenTruyen: 17,
-    soNguoiThamGiaTuyenTruyen: 2330,
-    cap1: 14,
-    cap2: 13,
-    cap3: 9,
-    cap4: 5,
-    cap5: 2,
-    soPhuongTien: 62,
-    soCbcs: 276,
-    thietHai: 160800,
-  },
-
-  {
-    id: '42',
-    tuNgay: new Date('2026-10-15'),
-    denNgay: new Date('2026-10-21'),
-    tuan: '42',
-    bienBan: 445,
-    dinhKy: 420,
-    dotXuat: 25,
-    nhom1: 260,
-    nhom2: 185,
-    huongDan: 319,
-    soHoa: 438,
-    soBienBan: 150,
-    soHanhVi: 182,
-    soTien: 9180,
-    pc06_1: 14,
-    pc07_1: 13,
-    pc08_1: 10,
-    pc09_1: 6,
-    pc06_2: 12,
-    pc07_2: 11,
-    pc08_2: 7,
-    pc09_2: 4,
-    soLopHuanLuyen: 18,
-    soCoSo: 35,
-    soNguoiThamGiaHuanLuyen: 2780,
-    soLopTuyenTruyen: 17,
-    soNguoiThamGiaTuyenTruyen: 2420,
-    cap1: 15,
-    cap2: 13,
-    cap3: 10,
-    cap4: 5,
-    cap5: 2,
-    soPhuongTien: 64,
-    soCbcs: 285,
-    thietHai: 172600,
-  },
-
-  {
-    id: '43',
-    tuNgay: new Date('2026-10-22'),
-    denNgay: new Date('2026-10-28'),
-    tuan: '43',
-    bienBan: 459,
-    dinhKy: 433,
-    dotXuat: 26,
-    nhom1: 268,
-    nhom2: 191,
-    huongDan: 329,
-    soHoa: 452,
-    soBienBan: 155,
-    soHanhVi: 188,
-    soTien: 9650,
-    pc06_1: 15,
-    pc07_1: 13,
-    pc08_1: 10,
-    pc09_1: 6,
-    pc06_2: 13,
-    pc07_2: 11,
-    pc08_2: 8,
-    pc09_2: 5,
-    soLopHuanLuyen: 19,
-    soCoSo: 36,
-    soNguoiThamGiaHuanLuyen: 2880,
-    soLopTuyenTruyen: 18,
-    soNguoiThamGiaTuyenTruyen: 2510,
-    cap1: 15,
-    cap2: 14,
-    cap3: 10,
-    cap4: 5,
-    cap5: 3,
-    soPhuongTien: 66,
-    soCbcs: 294,
-    thietHai: 184900,
-  },
-
-  {
-    id: '44',
-    tuNgay: new Date('2026-10-29'),
-    denNgay: new Date('2026-11-04'),
-    tuan: '44',
-    bienBan: 472,
-    dinhKy: 445,
-    dotXuat: 27,
-    nhom1: 276,
-    nhom2: 196,
-    huongDan: 338,
-    soHoa: 465,
-    soBienBan: 160,
-    soHanhVi: 194,
-    soTien: 10120,
-    pc06_1: 15,
-    pc07_1: 14,
-    pc08_1: 11,
-    pc09_1: 7,
-    pc06_2: 13,
-    pc07_2: 12,
-    pc08_2: 8,
-    pc09_2: 5,
-    soLopHuanLuyen: 19,
-    soCoSo: 37,
-    soNguoiThamGiaHuanLuyen: 2980,
-    soLopTuyenTruyen: 18,
-    soNguoiThamGiaTuyenTruyen: 2600,
-    cap1: 16,
-    cap2: 14,
-    cap3: 11,
-    cap4: 6,
-    cap5: 3,
-    soPhuongTien: 68,
-    soCbcs: 303,
-    thietHai: 197300,
-  },
-
-  {
-    id: '45',
-    tuNgay: new Date('2026-11-05'),
-    denNgay: new Date('2026-11-11'),
-    tuan: '45',
-    bienBan: 486,
-    dinhKy: 457,
-    dotXuat: 29,
-    nhom1: 284,
-    nhom2: 202,
-    huongDan: 348,
-    soHoa: 479,
-    soBienBan: 165,
-    soHanhVi: 200,
-    soTien: 10600,
-    pc06_1: 16,
-    pc07_1: 14,
-    pc08_1: 11,
-    pc09_1: 7,
-    pc06_2: 14,
-    pc07_2: 12,
-    pc08_2: 9,
-    pc09_2: 5,
-    soLopHuanLuyen: 20,
-    soCoSo: 38,
-    soNguoiThamGiaHuanLuyen: 3080,
-    soLopTuyenTruyen: 19,
-    soNguoiThamGiaTuyenTruyen: 2690,
-    cap1: 16,
-    cap2: 15,
-    cap3: 11,
-    cap4: 6,
-    cap5: 3,
-    soPhuongTien: 70,
-    soCbcs: 312,
-    thietHai: 210500,
-  },
-
-  {
-    id: '46',
-    tuNgay: new Date('2026-11-12'),
-    denNgay: new Date('2026-11-18'),
-    tuan: '46',
-    bienBan: 501,
-    dinhKy: 471,
-    dotXuat: 30,
-    nhom1: 293,
-    nhom2: 208,
-    huongDan: 359,
-    soHoa: 494,
-    soBienBan: 171,
-    soHanhVi: 207,
-    soTien: 11120,
-    pc06_1: 16,
-    pc07_1: 15,
-    pc08_1: 12,
-    pc09_1: 7,
-    pc06_2: 14,
-    pc07_2: 13,
-    pc08_2: 9,
-    pc09_2: 6,
-    soLopHuanLuyen: 20,
-    soCoSo: 39,
-    soNguoiThamGiaHuanLuyen: 3180,
-    soLopTuyenTruyen: 19,
-    soNguoiThamGiaTuyenTruyen: 2780,
-    cap1: 17,
-    cap2: 15,
-    cap3: 12,
-    cap4: 6,
-    cap5: 3,
-    soPhuongTien: 72,
-    soCbcs: 321,
-    thietHai: 224800,
-  },
-
-  {
-    id: '47',
-    tuNgay: new Date('2026-11-19'),
-    denNgay: new Date('2026-11-25'),
-    tuan: '47',
-    bienBan: 516,
-    dinhKy: 485,
-    dotXuat: 31,
-    nhom1: 301,
-    nhom2: 215,
-    huongDan: 369,
-    soHoa: 509,
-    soBienBan: 176,
-    soHanhVi: 214,
-    soTien: 11640,
-    pc06_1: 17,
-    pc07_1: 15,
-    pc08_1: 12,
-    pc09_1: 8,
-    pc06_2: 15,
-    pc07_2: 13,
-    pc08_2: 10,
-    pc09_2: 6,
-    soLopHuanLuyen: 21,
-    soCoSo: 40,
-    soNguoiThamGiaHuanLuyen: 3280,
-    soLopTuyenTruyen: 20,
-    soNguoiThamGiaTuyenTruyen: 2870,
-    cap1: 17,
-    cap2: 16,
-    cap3: 12,
-    cap4: 7,
-    cap5: 3,
-    soPhuongTien: 74,
-    soCbcs: 330,
-    thietHai: 239500,
-  },
-
-  {
-    id: '48',
-    tuNgay: new Date('2026-11-26'),
-    denNgay: new Date('2026-12-02'),
-    tuan: '48',
-    bienBan: 531,
-    dinhKy: 499,
-    dotXuat: 32,
-    nhom1: 310,
-    nhom2: 221,
-    huongDan: 380,
-    soHoa: 524,
-    soBienBan: 182,
-    soHanhVi: 221,
-    soTien: 12180,
-    pc06_1: 17,
-    pc07_1: 16,
-    pc08_1: 13,
-    pc09_1: 8,
-    pc06_2: 15,
-    pc07_2: 14,
-    pc08_2: 10,
-    pc09_2: 6,
-    soLopHuanLuyen: 21,
-    soCoSo: 41,
-    soNguoiThamGiaHuanLuyen: 3380,
-    soLopTuyenTruyen: 20,
-    soNguoiThamGiaTuyenTruyen: 2960,
-    cap1: 18,
-    cap2: 16,
-    cap3: 13,
-    cap4: 7,
-    cap5: 3,
-    soPhuongTien: 76,
-    soCbcs: 339,
-    thietHai: 254800,
-  },
-
-  {
-    id: '49',
-    tuNgay: new Date('2026-12-03'),
-    denNgay: new Date('2026-12-09'),
-    tuan: '49',
-    bienBan: 546,
-    dinhKy: 513,
-    dotXuat: 33,
-    nhom1: 319,
-    nhom2: 227,
-    huongDan: 391,
-    soHoa: 539,
-    soBienBan: 188,
-    soHanhVi: 228,
-    soTien: 12720,
-    pc06_1: 18,
-    pc07_1: 16,
-    pc08_1: 13,
-    pc09_1: 8,
-    pc06_2: 16,
-    pc07_2: 14,
-    pc08_2: 11,
-    pc09_2: 7,
-    soLopHuanLuyen: 22,
-    soCoSo: 42,
-    soNguoiThamGiaHuanLuyen: 3480,
-    soLopTuyenTruyen: 21,
-    soNguoiThamGiaTuyenTruyen: 3050,
-    cap1: 18,
-    cap2: 17,
-    cap3: 13,
-    cap4: 7,
-    cap5: 4,
-    soPhuongTien: 78,
-    soCbcs: 348,
-    thietHai: 270500,
-  },
-
-  {
-    id: '50',
-    tuNgay: new Date('2026-12-10'),
-    denNgay: new Date('2026-12-16'),
-    tuan: '50',
-    bienBan: 562,
-    dinhKy: 527,
-    dotXuat: 35,
-    nhom1: 328,
-    nhom2: 234,
-    huongDan: 402,
-    soHoa: 555,
-    soBienBan: 194,
-    soHanhVi: 235,
-    soTien: 13280,
-    pc06_1: 18,
-    pc07_1: 17,
-    pc08_1: 14,
-    pc09_1: 9,
-    pc06_2: 16,
-    pc07_2: 15,
-    pc08_2: 11,
-    pc09_2: 7,
-    soLopHuanLuyen: 22,
-    soCoSo: 43,
-    soNguoiThamGiaHuanLuyen: 3580,
-    soLopTuyenTruyen: 21,
-    soNguoiThamGiaTuyenTruyen: 3140,
-    cap1: 19,
-    cap2: 17,
-    cap3: 14,
-    cap4: 8,
-    cap5: 4,
-    soPhuongTien: 80,
-    soCbcs: 357,
-    thietHai: 287000,
+    id: 'd0b01266-190e-47db-9b60-567645b6da92',
+    schemaId: 'a8ed71a7-bd5b-424f-82b8-06497e1f84d2',
+    name: 'LTT 1',
+    dataValues: {
+      coSo: 'Công ty TNHH Kỹ Thuật Tạo Khuôn LONGFA Việt Nam',
+      canBo: 'Đại úy Nguyễn Đức Anh',
+      chiHuy: 'Trung tá Văn Hoàng Hân',
+      diaBan: 'phường Tân Hiệp và phường Tân Khánh',
+      sources: {
+        docx: {
+          files: ['/LTT/templates/02. Mẫu danh sach diem danh.docx'],
+        },
+        excel: {
+          file: '/LTT/excel/LTT.xlsx',
+        },
+      },
+      daiDienCoSo: 'HE JINPING',
+      ngayHuanLuyen: ['19/10/2026', '20/10/2026', '21/10/2026'],
+      canBoHuanLuyen: 'Huỳnh Như An',
+    },
+    createdAt: new Date('2026-11-01T07:40:26.886Z'),
+    updatedAt: new Date('2026-11-01T07:40:26.886Z'),
   },
 ];
 
-const mockSummaryRows: SummaryRow[] = [
-  {
-    // Công tác kiểm tra
-    tongBienBan: 2747,
-    tongDinhKy: 2716,
-    tongDotXuat: 31,
-    tongNhom1: 1588,
-    tongNhom2: 1159,
-    tongHuongDan: 10611,
-    tongSoHoa: 2710,
-
-    // Xử lý vi phạm
-    tongSoBienBan: 179,
-    tongSoHanhVi: 202,
-    tongSoTien: 6492,
-
-    // Phối hợp - nhóm 1
-    tongPc06_1: 0,
-    tongPc07_1: 0,
-    tongPc08_1: 0,
-    tongPc09_1: 0,
-
-    // Phối hợp - nhóm 2
-    tongPc06_2: 0,
-    tongPc07_2: 0,
-    tongPc08_2: 0,
-    tongPc09_2: 0,
-
-    // Huấn luyện
-    tongSoLopHuanLuyen: 39,
-    tongSoCoSo: 1,
-    tongSoNguoiThamGiaHuanLuyen: 164,
-
-    // Tuyên truyền
-    tongSoLopTuyenTruyen: 0,
-    tongSoNguoiThamGiaTuyenTruyen: 13965,
-
-    // Cấp
-    tongCap1: 8,
-    tongCap2: 9,
-    tongCap3: 1,
-    tongCap4: 0,
-    tongCap5: 1,
-
-    // Phương tiện / CBCS
-    tongSoPhuongTien: 104,
-    tongSoCbcs: 575,
-
-    // Thiệt hại
-    tongThietHai: 150092.3,
-  },
-];
-
-const statistics = [
-  {
-    title: 'Tổng biên bản',
-    value: 2747,
-    icon: <CiBoxes size={28} color="#0970B8" />,
-  },
-  {
-    title: 'Tổng biên bản vi phạm',
-    value: 179,
-    icon: <LuClipboardCheck size={28} color="#0970B8" />,
-  },
-  {
-    title: 'Tổng số lớp huấn luyện',
-    value: 39,
-    icon: <HiOutlineClipboardDocumentList size={28} color="#0970B8" />,
-  },
-  {
-    title: 'Tổng số người tham gia',
-    value: 13965,
-    icon: <HiOutlineClipboardDocument size={28} color="#0970B8" />,
-  },
-];
-
-/**
- * =========================
- * COLUMNS
- * =========================
- */
-const columns: readonly AppColumnOrColumnGroup<Row, SummaryRow>[] = [
+// COLUMNS
+const columns: readonly AppColumnOrColumnGroup<Row>[] = [
+  SelectColumn,
   RowNumberColumn,
   {
-    key: 'tuNgay',
-    name: 'Từ ngày',
+    key: 'name',
+    name: 'Tên hồ sơ',
     frozen: true,
-    renderCell: ({ row }) => dayjs(row.tuNgay).format('DD/MM/YYYY'),
+    renderCell: ({ row }) => <Text strong>{row.name}</Text>,
   },
   {
-    key: 'denNgay',
-    name: 'Đến ngày',
-    frozen: true,
-    renderCell: ({ row }) => dayjs(row.denNgay).format('DD/MM/YYYY'),
+    key: 'daiDienCoSo',
+    name: 'Đại diện cơ sở',
+    renderCell: ({ row }) => <Text>{row.dataValues.daiDienCoSo}</Text>,
   },
   {
-    key: 'tuan',
-    name: 'Tuần',
-    frozen: true,
+    key: 'coSo',
+    name: 'Cơ sở',
+    renderCell: ({ row }) => <Text>{row.dataValues.coSo}</Text>,
   },
-  // =========================
-  // CÔNG TÁC KIỂM TRA
-  // =========================
   {
-    name: 'Công tác kiểm tra',
-    children: [
-      {
-        key: 'bienBan',
-        name: 'Tổng biên bản',
-        renderSummaryCell: ({ row }) => row.tongBienBan,
-      },
-      {
-        key: 'dinhKy',
-        name: 'Định kỳ',
-        renderSummaryCell: ({ row }) => row.tongDinhKy,
-      },
-      {
-        key: 'dotXuat',
-        name: 'Đột xuất',
-        renderSummaryCell: ({ row }) => row.tongDotXuat,
-      },
-      {
-        key: 'nhom1',
-        name: 'Nhóm 1',
-        renderSummaryCell: ({ row }) => row.tongNhom1,
-      },
-      {
-        key: 'nhom2',
-        name: 'Nhóm 2',
-        renderSummaryCell: ({ row }) => row.tongNhom2,
-      },
-      {
-        key: 'huongDan',
-        name: 'Hướng dẫn',
-        renderSummaryCell: ({ row }) => row.tongHuongDan,
-      },
-      {
-        key: 'soHoa',
-        name: 'Số hóa',
-        renderSummaryCell: ({ row }) => row.tongSoHoa,
-      },
-    ],
+    key: 'diaBan',
+    name: 'Địa bàn',
+    renderCell: ({ row }) => <Text>{row.dataValues.diaBan}</Text>,
   },
-  // =========================
-  // XỬ LÝ VI PHẠM
-  // =========================
   {
-    name: 'Xử lý vi phạm',
-    children: [
-      {
-        key: 'soBienBan',
-        name: 'Số biên bản',
-        renderSummaryCell: ({ row }) => row.tongSoBienBan,
-      },
-      {
-        key: 'soHanhVi',
-        name: 'Số hành vi',
-        renderSummaryCell: ({ row }) => row.tongSoHanhVi,
-      },
-      {
-        key: 'soTien',
-        name: 'Số tiền',
-        renderSummaryCell: ({ row }) => row.tongSoTien,
-      },
-    ],
+    key: 'canBo',
+    name: 'Cán bộ phụ trách',
+    renderCell: ({ row }) => <Text>{row.dataValues.canBo}</Text>,
   },
-  // =========================
-  // PHÂN CÔNG / PHỐI HỢP
-  // =========================
   {
-    name: 'Phối hợp',
-    children: [
-      {
-        key: 'pc06_1',
-        name: 'PC06',
-        renderSummaryCell: ({ row }) => row.tongPc06_1,
-      },
-      {
-        key: 'pc07_1',
-        name: 'PC07',
-        renderSummaryCell: ({ row }) => row.tongPc07_1,
-      },
-      {
-        key: 'pc08_1',
-        name: 'PC08',
-        renderSummaryCell: ({ row }) => row.tongPc08_1,
-      },
-      {
-        key: 'pc09_1',
-        name: 'PC09',
-        renderSummaryCell: ({ row }) => row.tongPc09_1,
-      },
-      {
-        key: 'pc06_2',
-        name: 'PC06',
-        renderSummaryCell: ({ row }) => row.tongPc06_2,
-      },
-      {
-        key: 'pc07_2',
-        name: 'PC07',
-        renderSummaryCell: ({ row }) => row.tongPc07_2,
-      },
-      {
-        key: 'pc08_2',
-        name: 'PC08',
-        renderSummaryCell: ({ row }) => row.tongPc08_2,
-      },
-      {
-        key: 'pc09_2',
-        name: 'PC09',
-        renderSummaryCell: ({ row }) => row.tongPc09_2,
-      },
-    ],
+    key: 'chiHuy',
+    name: 'Chỉ huy',
+    renderCell: ({ row }) => <Text>{row.dataValues.chiHuy}</Text>,
   },
-  // =========================
-  // HUẤN LUYỆN
-  // =========================
   {
-    name: 'Huấn luyện',
-    children: [
-      {
-        key: 'soLopHuanLuyen',
-        name: 'Số lớp huấn luyện',
-        renderSummaryCell: ({ row }) => row.tongSoLopHuanLuyen,
-      },
-      {
-        key: 'soCoSo',
-        name: 'Số cơ sở',
-        renderSummaryCell: ({ row }) => row.tongSoCoSo,
-      },
-      {
-        key: 'soNguoiThamGiaHuanLuyen',
-        name: 'Số người tham gia',
-        renderSummaryCell: ({ row }) => row.tongSoNguoiThamGiaHuanLuyen,
-      },
-    ],
+    key: 'canBoHuanLuyen',
+    name: 'Cán bộ huấn luyện',
+    renderCell: ({ row }) => <Text>{row.dataValues.canBoHuanLuyen}</Text>,
   },
-  // =========================
-  // TUYÊN TRUYỀN
-  // =========================
   {
-    name: 'Tuyên truyền',
-    children: [
-      {
-        key: 'soLopTuyenTruyen',
-        name: 'Số lớp tuyên truyền',
-        renderSummaryCell: ({ row }) => row.tongSoLopTuyenTruyen,
-      },
-      {
-        key: 'soNguoiThamGiaTuyenTruyen',
-        name: 'Số người tham gia',
-        renderSummaryCell: ({ row }) => row.tongSoNguoiThamGiaTuyenTruyen,
-      },
-    ],
-  },
-  // =========================
-  // CẤP
-  // =========================
-  {
-    name: 'Vụ cháy',
-    children: [
-      {
-        key: 'cap1',
-        name: 'Cấp 1',
-        renderSummaryCell: ({ row }) => row.tongCap1,
-      },
-      {
-        key: 'cap2',
-        name: 'Cấp 2',
-        renderSummaryCell: ({ row }) => row.tongCap2,
-      },
-      {
-        key: 'cap3',
-        name: 'Cấp 3',
-        renderSummaryCell: ({ row }) => row.tongCap3,
-      },
-      {
-        key: 'cap4',
-        name: 'Cấp 4',
-        renderSummaryCell: ({ row }) => row.tongCap4,
-      },
-      {
-        key: 'cap5',
-        name: 'Cấp 5',
-        renderSummaryCell: ({ row }) => row.tongCap5,
-      },
-      {
-        key: 'soPhuongTien',
-        name: 'Số phương tiện',
-        renderSummaryCell: ({ row }) => row.tongSoPhuongTien,
-      },
-      {
-        key: 'soCbcs',
-        name: 'Số CBCS',
-        renderSummaryCell: ({ row }) => row.tongSoCbcs,
-      },
-      {
-        key: 'thietHai',
-        name: 'Thiệt hại',
-        renderSummaryCell: ({ row }) => row.tongThietHai,
-      },
-    ],
+    key: 'ngayHuanLuyen',
+    name: 'Ngày huấn luyện',
+    width: 310,
+    renderCell: ({ row }) => {
+      const dates = row.dataValues.ngayHuanLuyen ?? [];
+
+      return (
+        <Flex gap={4} align="center" wrap="nowrap">
+          {dates.length > 0 ? (
+            dates.map((date: string, index: number) => (
+              <Tag
+                key={`${date}-${index}`}
+                color="lime-inverse"
+                style={{
+                  margin: 0,
+                  flexShrink: 0,
+                  borderRadius: 6,
+                }}
+              >
+                <CalendarOutlined style={{ marginRight: 4 }} />
+                {date}
+              </Tag>
+            ))
+          ) : (
+            <Text type="secondary">Chưa có lịch</Text>
+          )}
+        </Flex>
+      );
+    },
   },
 ];
 
-/**
- * =========================
- * PAGE
- * =========================
- */
-const WeeklyReportPage = () => {
+const TranningPage = () => {
+  const [openModal, setOpenModal] = useState<ModalStage>(null);
+  const [selectedRows, setSelectedRows] = useState(
+    (): ReadonlySet<string> => new Set(),
+  );
+
+  const handleSelectedRowsChange = (newSelectedRows: ReadonlySet<string>) => {
+    if (newSelectedRows.size === 0) {
+      setSelectedRows(new Set());
+      return;
+    }
+
+    const selectedId = [...newSelectedRows].find((id) => !selectedRows.has(id));
+
+    setSelectedRows(
+      new Set(selectedId ? [selectedId] : [...selectedRows].slice(0, 1)),
+    );
+  };
+
+  const handleModalChange = (stage: ModalStage) => {
+    setOpenModal(stage);
+  };
+
   return (
     <>
-      {/* FILTER */}
-      <Flex gap={12} orientation="vertical">
-        <AppCard alignSelf="flex-end">
-          <Flex gap={12}>
-            <RangePicker
-              placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
-              format="DD-MM-YYYY"
-              allowClear
-              presets={[
-                {
-                  label: 'Hôm nay',
-                  value: [dayjs(), dayjs()],
-                },
-                {
-                  label: 'Tuần này',
-                  value: [dayjs().subtract(6, 'day'), dayjs()],
-                },
-                {
-                  label: 'Tháng này',
-                  value: [dayjs().date(15), dayjs().add(1, 'month').date(14)],
-                },
-              ]}
-              defaultPickerValue={[
-                dayjs().startOf('month'),
-                dayjs().add(1, 'month').startOf('month'),
-              ]}
-            />
+      <Flex orientation="vertical" gap={12}>
+        <Card
+          styles={{
+            body: {
+              padding: 10,
+            },
+          }}
+          title={
+            <Flex vertical gap={2}>
+              <Title level={5} style={{ margin: 0 }}>
+                Danh sách hồ sơ
+              </Title>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Quản lý toàn bộ hồ sơ huấn luyện
+              </Text>
+            </Flex>
+          }
+          extra={
+            <Text type="secondary">Tổng cộng {mockRows.length} hồ sơ</Text>
+          }
+        >
+          {/* TOOLBAR */}
+          <Flex justify="space-between" align="center" gap={12} wrap="wrap">
+            <Space wrap>
+              <Input
+                placeholder="Tìm kiếm hồ sơ..."
+                prefix={<SearchOutlined />}
+                style={{ width: 260 }}
+                allowClear
+              />
+            </Space>
 
-            <Button type="primary">Tìm kiếm</Button>
+            <Flex align="center" gap={8} wrap="wrap">
+              <Button icon={<ReloadOutlined />} color="cyan" variant="outlined">
+                Làm mới
+              </Button>
+
+              <Divider
+                orientation="vertical"
+                style={{ height: 24, marginInline: 8 }}
+              />
+
+              <Button
+                icon={<EyeOutlined />}
+                color="cyan"
+                variant="filled"
+                onClick={() => handleModalChange('view')}
+              >
+                Chi tiết
+              </Button>
+
+              <Button
+                icon={<PlusOutlined />}
+                color="blue"
+                variant="filled"
+                onClick={() => handleModalChange('new')}
+              >
+                Thêm mới
+              </Button>
+
+              <Button
+                icon={<RiEdit2Fill />}
+                color="volcano"
+                variant="filled"
+                onClick={() => handleModalChange('edit')}
+              >
+                Chỉnh sửa
+              </Button>
+
+              <Button
+                color="danger"
+                variant="filled"
+                icon={<MdDeleteForever />}
+              >
+                Xóa
+              </Button>
+            </Flex>
           </Flex>
-        </AppCard>
-
-        <AppDataGrid
-          gridLayout="fit"
-          rowKeyGetter={(row) => row.id}
-          columns={columns}
-          rows={mockRows.splice(0, 1)}
-          defaultColumnOptions={{ textAlign: 'center' }}
-          style={{ maxHeight: 215 }}
-        />
-      </Flex>
-
-      <Divider>Thống kê</Divider>
-
-      <Flex orientation="vertical" gap={12} flex={1}>
-        <Flex gap={12}>
-          {statistics.map((item) => (
-            <StatisticCard
-              key={item.title}
-              title={item.title}
-              value={item.value}
-              icon={item.icon}
-            />
-          ))}
-        </Flex>
-
-        {/* DATA GRID */}
+        </Card>
         <AppDataGrid
           rowKeyGetter={(row) => row.id}
           columns={columns}
           rows={mockRows}
-          topSummaryRows={mockSummaryRows}
-          defaultColumnOptions={{ textAlign: 'center' }}
+          selectedRows={selectedRows}
+          onSelectedRowsChange={handleSelectedRowsChange}
+          defaultColumnOptions={{
+            textAlign: 'center',
+            resizable: true,
+          }}
           style={{
             height: 555,
           }}
         />
       </Flex>
+      <Modal
+        title="Modal 1000px width"
+        centered
+        open={openModal != null}
+        onOk={() => handleModalChange(null)}
+        onCancel={() => handleModalChange(null)}
+        width={1000}
+      >
+        <p>some contents...</p>
+        <p>some contents...</p>
+        <p>some contents...</p>
+      </Modal>
     </>
   );
 };
 
-export default WeeklyReportPage;
+export default TranningPage;

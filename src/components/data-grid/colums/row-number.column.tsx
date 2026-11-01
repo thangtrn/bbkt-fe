@@ -6,8 +6,8 @@ export const ROW_NUMBER_COLUMN_KEY = 'stt';
 export const RowNumberColumn: AppColumn<any, any> = {
   key: ROW_NUMBER_COLUMN_KEY,
   name: 'STT',
-  width: 40,
-  minWidth: 40,
+  width: 45,
+  minWidth: 45,
   maxWidth: 60,
   resizable: false,
   sortable: false,
