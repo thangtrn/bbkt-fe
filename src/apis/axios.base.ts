@@ -5,13 +5,13 @@ class AxiosService implements RepositoryPort {
   private static instance: AxiosService;
   protected baseUrl: string;
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl ?? process.env.NEXT_PUBLIC_SITE_URL!;
+    this.baseUrl = baseUrl ?? process.env.NEXT_PUBLIC_API_URL!;
   }
 
   static getInstance(baseUrl?: string): AxiosService {
     this.instance =
       this.instance ??
-      new AxiosService(baseUrl ?? process.env.NEXT_PUBLIC_SITE_URL!);
+      new AxiosService(baseUrl ?? process.env.NEXT_PUBLIC_API_URL!);
     return this.instance;
   }
 

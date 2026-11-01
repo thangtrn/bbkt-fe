@@ -27,8 +27,9 @@ import {
 import { RiEdit2Fill } from 'react-icons/ri';
 import dayjs from 'dayjs';
 import { MdDeleteForever } from 'react-icons/md';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SelectColumn } from 'react-data-grid';
+import RecordSchemaService from '@/services/record-schema.service';
 
 const { Title, Text } = Typography;
 
@@ -148,7 +149,8 @@ const columns: readonly AppColumnOrColumnGroup<Row>[] = [
             dates.map((date: string, index: number) => (
               <Tag
                 key={`${date}-${index}`}
-                color="lime-inverse"
+                variant="solid"
+                color="cyan"
                 style={{
                   margin: 0,
                   flexShrink: 0,
@@ -190,6 +192,17 @@ const TranningPage = () => {
   const handleModalChange = (stage: ModalStage) => {
     setOpenModal(stage);
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await RecordSchemaService.get(
+        'a8ed71a7-bd5b-424f-82b8-06497e1f84d2',
+      );
+
+      console.log(result);
+    };
+    fetchData();
+  }, []);
 
   return (
     <>

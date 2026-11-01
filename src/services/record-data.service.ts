@@ -1,6 +1,6 @@
 import { axiosService } from '@/apis/axios.base';
 
-export class RecordDataService {
+class RecordDataServiceBase {
   protected baseUrl: string = '/record-data';
 
   get<T>(id: string): Promise<T> {
@@ -33,3 +33,6 @@ export class RecordDataService {
     return response;
   }
 }
+
+const RecordDataService = new RecordDataServiceBase();
+export default RecordDataService;
