@@ -1,0 +1,12 @@
+:root {
+  color-scheme: light; /* or 'dark', or 'light dark' for auto */
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #0000;
+}
+
+body {
+  font-family: var(--font-roboto), sans-serif;
+}

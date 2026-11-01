@@ -1,0 +1,77 @@
+.ant-layout.app-layout {
+  min-height: 100vh;
+
+  .ant-layout-header {
+    position: sticky;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 10;
+    display: flex;
+    padding: 0 16px;
+    align-items: center;
+    justify-content: space-between;
+    background-color: white;
+    // box-shadow: var(--ant-box-shadow-tertiary);
+  }
+
+  .app-logo {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    img {
+      size: 48px;
+      object-fit: cover;
+    }
+
+    span {
+      color: #e9c563;
+      font-weight: bold;
+      font-size: 24px;
+      text-shadow:
+        1px 0 #000000,
+        -1px 0 #000000,
+        0 1px #000000,
+        0 -1px #000000,
+        1px 1px #000000,
+        -1px -1px #000000,
+        1px -1px #000000,
+        -1px 1px #000000;
+    }
+  }
+
+  .ant-layout-content {
+    flex-grow: 1;
+  }
+
+  .setting {
+    &-title {
+      font-weight: bold;
+      line-height: normal;
+    }
+
+    &-subtitle {
+      font-size: 12;
+      line-height: normal;
+    }
+  }
+
+  .app-menu {
+    position: sticky;
+    top: 64px;
+    right: 0;
+    left: 0;
+    z-index: 10;
+    border-top: 1px solid #eeee;
+    // box-shadow: var(--ant-box-shadow-tertiary);
+    box-shadow:
+      0 2px 2px -1px rgba(0, 0, 0, 0.08),
+      0 3px 6px -3px rgba(0, 0, 0, 0.06),
+      0 3px 4px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .ant-layout-content {
+    padding: 16px;
+  }
+}
