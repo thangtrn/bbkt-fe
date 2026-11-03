@@ -195,11 +195,9 @@ const TranningPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const result = await RecordSchemaService.get(
-        'a8ed71a7-bd5b-424f-82b8-06497e1f84d2',
+      const result = await RecordSchemaService.getOne(
+        `?filter[0][field]=code&filter[0][type]=Eq&filter[0][value]=LTT2`,
       );
-
-      console.log(result);
     };
     fetchData();
   }, []);

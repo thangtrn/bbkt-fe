@@ -15,15 +15,21 @@ class AxiosService implements RepositoryPort {
     return this.instance;
   }
 
-  async get<T>(url: string): Promise<T> {
+  async getById<T>(url: string): Promise<T> {
     const http = await this._http();
     const response = await http.get<T>(url);
     return response.data;
   }
 
-  async getWithParams<T>(url: string, params: URLSearchParams): Promise<T> {
+  async getOne<T>(url: string, params: string): Promise<T | null> {
     const http = await this._http();
-    const response = await http.get<T>(url, { params });
+    const response = await http.get<T[]>(`${url}${params}`);
+    return response.data?.[0] ?? null;
+  }
+
+  async getWithParams<T>(url: string, params?: string): Promise<T> {
+    const http = await this._http();
+    const response = await http.get<T>(`${url}${params ?? ''}`);
     return response.data;
   }
 
