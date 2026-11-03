@@ -10,6 +10,7 @@ import {
   Divider,
   Flex,
   Input,
+  message,
   Modal,
   Row,
   Space,
@@ -25,76 +26,25 @@ import {
   CalendarOutlined,
 } from '@ant-design/icons';
 import { RiEdit2Fill } from 'react-icons/ri';
-import dayjs from 'dayjs';
 import { MdDeleteForever } from 'react-icons/md';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SelectColumn } from 'react-data-grid';
 import RecordSchemaService from '@/services/record-schema.service';
+import RecordDataService from '@/services/record-data.service';
+import { RecordData } from '@/types/record-data.type';
+import { RecordSchema } from '@/types/record-schema.type';
+import AppLoading from '@/components/ui/app-loading';
 
 const { Title, Text } = Typography;
-
-type ModalStage = 'view' | 'new' | 'edit' | null;
 
 interface Row {
   id: string;
   schemaId: string;
   name: string;
   dataValues: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
-
-// MOCK DATA
-const mockRows: Row[] = [
-  {
-    id: 'd0b01266-190e-47db-9b60-567645b6da9f',
-    schemaId: 'a8ed71a7-bd5b-424f-82b8-06497e1f84d2',
-    name: 'LTT 1',
-    dataValues: {
-      coSo: 'Công ty TNHH Kỹ Thuật Tạo Khuôn LONGFA Việt Nam',
-      canBo: 'Đại úy Nguyễn Đức Anh',
-      chiHuy: 'Trung tá Văn Hoàng Hân',
-      diaBan: 'phường Tân Hiệp và phường Tân Khánh',
-      sources: {
-        docx: {
-          files: ['/LTT/templates/02. Mẫu danh sach diem danh.docx'],
-        },
-        excel: {
-          file: '/LTT/excel/LTT.xlsx',
-        },
-      },
-      daiDienCoSo: 'HE JINPING',
-      ngayHuanLuyen: ['19/10/2026', '20/10/2026', '21/10/2026'],
-      canBoHuanLuyen: 'Huỳnh Như An',
-    },
-    createdAt: new Date('2026-11-01T07:40:26.886Z'),
-    updatedAt: new Date('2026-11-01T07:40:26.886Z'),
-  },
-  {
-    id: 'd0b01266-190e-47db-9b60-567645b6da92',
-    schemaId: 'a8ed71a7-bd5b-424f-82b8-06497e1f84d2',
-    name: 'LTT 1',
-    dataValues: {
-      coSo: 'Công ty TNHH Kỹ Thuật Tạo Khuôn LONGFA Việt Nam',
-      canBo: 'Đại úy Nguyễn Đức Anh',
-      chiHuy: 'Trung tá Văn Hoàng Hân',
-      diaBan: 'phường Tân Hiệp và phường Tân Khánh',
-      sources: {
-        docx: {
-          files: ['/LTT/templates/02. Mẫu danh sach diem danh.docx'],
-        },
-        excel: {
-          file: '/LTT/excel/LTT.xlsx',
-        },
-      },
-      daiDienCoSo: 'HE JINPING',
-      ngayHuanLuyen: ['19/10/2026', '20/10/2026', '21/10/2026'],
-      canBoHuanLuyen: 'Huỳnh Như An',
-    },
-    createdAt: new Date('2026-11-01T07:40:26.886Z'),
-    updatedAt: new Date('2026-11-01T07:40:26.886Z'),
-  },
-];
 
 // COLUMNS
 const columns: readonly AppColumnOrColumnGroup<Row>[] = [
@@ -170,10 +120,20 @@ const columns: readonly AppColumnOrColumnGroup<Row>[] = [
   },
 ];
 
+// ------------------------- MAIN -------------------------
+
 const TranningPage = () => {
-  const [openModal, setOpenModal] = useState<ModalStage>(null);
   const [selectedRows, setSelectedRows] = useState(
     (): ReadonlySet<string> => new Set(),
+  );
+
+  const [recordSchema, setRecordSchema] = useState<RecordSchema | null>(null);
+  const [recordData, setRecordData] = useState<RecordData[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const selectedRecord = useMemo(
+    () => recordData.find((record) => selectedRows.has(record.id)),
+    [recordData, selectedRows],
   );
 
   const handleSelectedRowsChange = (newSelectedRows: ReadonlySet<string>) => {
@@ -189,18 +149,58 @@ const TranningPage = () => {
     );
   };
 
-  const handleModalChange = (stage: ModalStage) => {
-    setOpenModal(stage);
+  const fetchRecordSchemaData = async () => {
+    setLoading(true);
+    try {
+      const result = await RecordSchemaService.getOne<RecordSchema | null>(
+        `?filter[0][field]=code&filter[0][type]=Eq&filter[0][value]=LTT`,
+      );
+
+      setRecordSchema(result);
+    } catch (error) {
+      console.log('ERROR', error);
+      message.error('Tải schema thất bại');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const result = await RecordSchemaService.getOne(
-        `?filter[0][field]=code&filter[0][type]=Eq&filter[0][value]=LTT2`,
+  const fetchRecordData = useCallback(async () => {
+    if (!recordSchema?.id) return;
+
+    setLoading(true);
+
+    try {
+      // await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      const result = await RecordDataService.getWithParams<RecordData[]>(
+        `?filter[0][field]=schemaId&filter[0][type]=Eq&filter[0][value]=${recordSchema.id}`,
       );
-    };
-    fetchData();
+
+      setRecordData(result ?? []);
+      message.open({
+        type: result ? 'success' : 'warning',
+        content: result ? 'Tải dữ liệu thành công' : 'Không có dữ liệu',
+      });
+    } catch (error) {
+      console.log('ERROR', error);
+      message.error('Tải dữ liệu thất bại');
+    } finally {
+      setLoading(false);
+    }
+  }, [recordSchema]);
+
+  // Fetch schema khi component mount
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchRecordSchemaData();
   }, []);
+
+  // Fetch recordData khi schema thay đổi
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchRecordData();
+  }, [fetchRecordData]);
 
   return (
     <>
@@ -222,7 +222,9 @@ const TranningPage = () => {
             </Flex>
           }
           extra={
-            <Text type="secondary">Tổng cộng {mockRows.length} hồ sơ</Text>
+            <Text type="secondary">
+              Tổng cộng {recordData?.length || 0} hồ sơ
+            </Text>
           }
         >
           {/* TOOLBAR */}
@@ -237,7 +239,13 @@ const TranningPage = () => {
             </Space>
 
             <Flex align="center" gap={8} wrap="wrap">
-              <Button icon={<ReloadOutlined />} color="cyan" variant="outlined">
+              <Button
+                icon={<ReloadOutlined />}
+                color="cyan"
+                variant="outlined"
+                loading={loading}
+                onClick={fetchRecordData}
+              >
                 Làm mới
               </Button>
 
@@ -247,28 +255,30 @@ const TranningPage = () => {
               />
 
               <Button
-                icon={<EyeOutlined />}
-                color="cyan"
-                variant="filled"
-                onClick={() => handleModalChange('view')}
-              >
-                Chi tiết
-              </Button>
-
-              <Button
                 icon={<PlusOutlined />}
                 color="blue"
                 variant="filled"
-                onClick={() => handleModalChange('new')}
+                loading={loading}
               >
                 Thêm mới
+              </Button>
+
+              <Button
+                icon={<EyeOutlined />}
+                color="cyan"
+                variant="filled"
+                disabled={!selectedRows.size}
+                loading={loading}
+              >
+                Chi tiết
               </Button>
 
               <Button
                 icon={<RiEdit2Fill />}
                 color="volcano"
                 variant="filled"
-                onClick={() => handleModalChange('edit')}
+                disabled={!selectedRows.size}
+                loading={loading}
               >
                 Chỉnh sửa
               </Button>
@@ -276,6 +286,8 @@ const TranningPage = () => {
               <Button
                 color="danger"
                 variant="filled"
+                disabled={!selectedRows.size}
+                loading={loading}
                 icon={<MdDeleteForever />}
               >
                 Xóa
@@ -286,7 +298,7 @@ const TranningPage = () => {
         <AppDataGrid
           rowKeyGetter={(row) => row.id}
           columns={columns}
-          rows={mockRows}
+          rows={recordData}
           selectedRows={selectedRows}
           onSelectedRowsChange={handleSelectedRowsChange}
           defaultColumnOptions={{
@@ -298,18 +310,7 @@ const TranningPage = () => {
           }}
         />
       </Flex>
-      <Modal
-        title="Modal 1000px width"
-        centered
-        open={openModal != null}
-        onOk={() => handleModalChange(null)}
-        onCancel={() => handleModalChange(null)}
-        width={1000}
-      >
-        <p>some contents...</p>
-        <p>some contents...</p>
-        <p>some contents...</p>
-      </Modal>
+      <AppLoading loading={loading} />
     </>
   );
 };
